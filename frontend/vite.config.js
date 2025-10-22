@@ -8,9 +8,9 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [react()],
-    base: isProduction ? './' : '/', // ✅ adjusts automatically
+    base: isProduction ? './' : '/', //  adjusts automatically
     build: {
-      outDir: 'dist', // ✅ ensure Vercel uses dist
+      outDir: 'dist', //  ensure Vercel uses dist
     },
     server: {
       port: 5173, // optional — set your local dev port
