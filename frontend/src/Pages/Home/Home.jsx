@@ -6,6 +6,9 @@ import ExploreMenu from "../../Components/ExploreMenu/ExploreMenu"; // Import Ex
 import ServiceDisplay from "../../Components/ServiceDisplay/ServiceDisplay"; // Import ServiceDisplay
 import AppDownload from "../../Components/AppDownload/AppDownload"; // Import AppDownload
 
+// Backend URL from environment variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 const Home = () => {
   const location = useLocation();
   const [notification, setNotification] = useState("");
@@ -25,15 +28,17 @@ const Home = () => {
   }, [location.state]);
 
   return (
-    <div>
+    <div className="home-page">
       {notification && (
         <div className="notification">
           <p>{notification}</p>
         </div>
       )}
-      <Header />
-      <ExploreMenu category={category} setCategory={setCategory} />
-      <ServiceDisplay category={category} />
+
+      {/* Pass API_BASE_URL to child components if needed */}
+      <Header apiUrl={API_BASE_URL} />
+      <ExploreMenu category={category} setCategory={setCategory} apiUrl={API_BASE_URL} />
+      <ServiceDisplay category={category} apiUrl={API_BASE_URL} />
       <AppDownload />
     </div>
   );
