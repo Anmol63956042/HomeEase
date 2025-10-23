@@ -1,23 +1,36 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+
+/* Global reset and font */
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  font-family: Outfit;
+  font-family: 'Outfit', sans-serif;
   scroll-behavior: smooth;
 }
+
+/* Ensure body takes full height */
 body {
   min-height: 100vh;
+  background-color: #f9f9f9; /* optional: light background */
 }
+
+/* Links inherit color and remove underline */
 a {
   text-decoration: none;
   color: inherit;
 }
+
+/* Main app wrapper */
 .app {
   width: 100%;
   margin: auto;
+  display: flex;
+  flex-direction: column; /* ensures footer stays at bottom */
+  min-height: 100vh;
 }
 
+/* Fade-in animation for elements */
 @keyframes fadeIn {
   0% {
     opacity: 0;
