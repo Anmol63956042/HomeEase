@@ -1,3 +1,17 @@
+# Dependency directories
+node_modules/
+
+# Vite build output
+dist/
+dist-ssr/
+build/
+
+# Local environment files (never commit secrets)
+.env
+.env.local
+.env.development
+.env.production
+
 # Logs
 logs
 *.log
@@ -7,16 +21,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# OS files
+.DS_Store
+Thumbs.db
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
