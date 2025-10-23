@@ -3,25 +3,22 @@ import "./Cart.css";
 import { StoreContext } from "../../Components/context/storeContext";
 import { useNavigate } from "react-router-dom";
 
-const Cart = () => {
-  const {
-    cartItems,
-    service_list,
-    removeFromCart,
-    getTotalCartAmount,
-    url,
-    token,
-  } = useContext(StoreContext);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+const Cart = () => {
+  const { cartItems, service_list, removeFromCart, getTotalCartAmount, token } = useContext(StoreContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to sign-up page if the user is not logged in
     if (!token) {
       alert("Please sign up or log in before accessing the cart.");
       navigate("/auth");
     }
   }, [token, navigate]);
+
+  if (!service_list || service_list.length === 0) {
+    return <p className="empty-cart">No services available.</p>;
+  }
 
   return (
     <div className="cart">
@@ -41,7 +38,7 @@ const Cart = () => {
             return (
               <div key={index}>
                 <div className="cart-item-title cart-items-item">
-                  <img src={url + "/images/" + item.image} alt="" />
+                  <img src={`${API_BASE_URL}/images/${item.image}`} alt={item.name} />
                   <p>{item.name}</p>
                   <p>Rs.{item.price}</p>
                   <p>{cartItems[item._id]}</p>
@@ -56,6 +53,7 @@ const Cart = () => {
           }
         })}
       </div>
+
       <div className="cart-bottom">
         <div className="cart-total">
           <h2>Cart Total</h2>
@@ -72,19 +70,17 @@ const Cart = () => {
             <hr />
             <div className="cart-total-details">
               <b>Total</b>
-              <b>
-                Rs.{" "}
-                {getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 200}
-              </b>
+              <b>Rs. {getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 200}</b>
             </div>
           </div>
-          <button onClick={() => navigate("/order")}>
+          <button onClick={() => navigate("/order")} disabled={getTotalCartAmount() === 0}>
             PROCEED TO CHECKOUT
           </button>
         </div>
+
         <div className="cart-promocode">
           <div>
-            <p>If you have a promo code, Enter it here</p>
+            <p>If you have a promo code, enter it here</p>
             <div className="cart-promocode-input">
               <input type="text" placeholder="Promo code" />
               <button>Submit</button>
