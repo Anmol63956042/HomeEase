@@ -7,8 +7,10 @@ import './Profile.css';
 const Profile = () => {
   const { token, setToken } = useContext(StoreContext);
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [userProfile, setUserProfile] = useState({
     firstName: '',
     lastName: '',
@@ -20,31 +22,17 @@ const Profile = () => {
     pincode: '',
   });
   const [orders, setOrders] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
 
+  // Load user profile & orders
   useEffect(() => {
-    if (!token) {
-      navigate('/auth');
-      return;
-    }
+    if (!token) return navigate('/auth');
 
-    // Fetch user profile data if we have a backend endpoint for it
-    // For now, just load from localStorage
-    loadUserData();
-    fetchUserOrders();
-  }, [token]);
-
-  const loadUserData = () => {
-    // In a real app, you'd fetch this from the backend
     const savedEmail = localStorage.getItem('userEmail');
-    if (savedEmail) {
-      setUserProfile(prev => ({
-        ...prev,
-        email: savedEmail
-      }));
-    }
+    if (savedEmail) setUserProfile(prev => ({ ...prev, email: savedEmail }));
+
+    fetchUserOrders();
     setLoading(false);
-  };
+  }, [token]);
 
   const fetchUserOrders = async () => {
     try {
@@ -52,194 +40,117 @@ const Profile = () => {
       if (!email) return;
 
       const response = await axios.get(`http://localhost:4000/api/orders/user/${email}`);
-      setOrders(response.data);
+      setOrders(response.data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setMessage({ type: 'error', text: 'Failed to load orders.' });
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value } = e.target;
-    setUserProfile(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setUserProfile(prev => ({ ...prev, [name]: value }));
   };
 
-  const toggleEdit = () => {
-    setIsEditing(!isEditing);
-  };
+  const toggleEdit = () => setIsEditing(!isEditing);
 
-  const saveProfile = async (e) => {
+  const saveProfile = async e => {
     e.preventDefault();
-    
+
     try {
-      // In a real app, you would update the user profile in the backend
-      // For now, just save to localStorage
+      // In real app: API call to update profile
       localStorage.setItem('userEmail', userProfile.email);
-      
+
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       setIsEditing(false);
-      
-      // Clear message after 3 seconds
-      setTimeout(() => {
-        setMessage(null);
-      }, 3000);
+
+      setTimeout(() => setMessage(null), 3000);
     } catch (error) {
+      console.error(error);
       setMessage({ type: 'error', text: 'Failed to update profile.' });
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
     setToken('');
     navigate('/');
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+  const formatDate = dateString =>
+    new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
-  };
 
-  if (loading) {
-    return <div className="profile-loading">Loading your profile...</div>;
-  }
+  if (loading) return <div className="profile-loading">Loading your profile...</div>;
 
   return (
     <div className="profile-container">
       <h2>My Profile</h2>
-      
-      {message && (
-        <div className={`message ${message.type}`}>
-          {message.text}
-        </div>
-      )}
-      
+
+      {message && <div className={`message ${message.type}`}>{message.text}</div>}
+
       <div className="profile-grid">
+        {/* Personal Info Section */}
         <div className="profile-section">
           <div className="profile-header">
             <h3>Personal Information</h3>
-            <button 
-              className="edit-button" 
-              onClick={toggleEdit}
-            >
+            <button className="edit-button" onClick={toggleEdit}>
               {isEditing ? 'Cancel' : 'Edit'}
             </button>
           </div>
-          
+
           <form onSubmit={saveProfile}>
             <div className="form-grid">
-              <div className="form-group">
-                <label>First Name</label>
-                <input 
-                  type="text" 
-                  name="firstName" 
-                  value={userProfile.firstName}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Last Name</label>
-                <input 
-                  type="text" 
-                  name="lastName" 
-                  value={userProfile.lastName}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Email</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  value={userProfile.email}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Phone</label>
-                <input 
-                  type="text" 
-                  name="phone" 
-                  value={userProfile.phone}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Street</label>
-                <input 
-                  type="text" 
-                  name="street" 
-                  value={userProfile.street}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>City</label>
-                <input 
-                  type="text" 
-                  name="city" 
-                  value={userProfile.city}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>State</label>
-                <input 
-                  type="text" 
-                  name="state" 
-                  value={userProfile.state}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Pincode</label>
-                <input 
-                  type="text" 
-                  name="pincode" 
-                  value={userProfile.pincode}
-                  onChange={handleInputChange}
-                  readOnly={!isEditing}
-                />
-              </div>
+              {[
+                { label: 'First Name', name: 'firstName', required: true },
+                { label: 'Last Name', name: 'lastName', required: true },
+                { label: 'Email', name: 'email', type: 'email', required: true },
+                { label: 'Phone', name: 'phone' },
+                { label: 'Street', name: 'street' },
+                { label: 'City', name: 'city' },
+                { label: 'State', name: 'state' },
+                { label: 'Pincode', name: 'pincode' },
+              ].map(field => (
+                <div className="form-group" key={field.name}>
+                  <label>{field.label}</label>
+                  <input
+                    type={field.type || 'text'}
+                    name={field.name}
+                    value={userProfile[field.name]}
+                    onChange={handleInputChange}
+                    readOnly={!isEditing}
+                    required={field.required || false}
+                  />
+                </div>
+              ))}
             </div>
-            
+
             {isEditing && (
               <div className="form-actions">
-                <button type="submit" className="save-button">Save Changes</button>
+                <button type="submit" className="save-button">
+                  Save Changes
+                </button>
               </div>
             )}
           </form>
-          
+
           <div className="logout-section">
-            <button className="logout-button" onClick={handleLogout}>Logout</button>
+            <button className="logout-button" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         </div>
-        
+
+        {/* Recent Orders Section */}
         <div className="recent-orders-section">
           <h3>Recent Orders</h3>
-          
+
           {orders.length === 0 ? (
             <p>You don't have any orders yet.</p>
           ) : (
@@ -253,13 +164,17 @@ const Profile = () => {
                     </span>
                   </div>
                   <div className="order-details-small">
-                    <p><strong>Date:</strong> {formatDate(order.createdAt)}</p>
-                    <p><strong>Amount:</strong> ₹{order.amount}</p>
+                    <p>
+                      <strong>Date:</strong> {formatDate(order.createdAt)}
+                    </p>
+                    <p>
+                      <strong>Amount:</strong> ₹{order.amount}
+                    </p>
                   </div>
                   <button onClick={() => navigate('/my-orders')}>View Details</button>
                 </div>
               ))}
-              
+
               {orders.length > 5 && (
                 <div className="view-all">
                   <button onClick={() => navigate('/my-orders')}>View All Orders</button>
@@ -273,4 +188,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Profile;
