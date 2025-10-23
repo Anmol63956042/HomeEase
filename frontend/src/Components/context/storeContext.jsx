@@ -8,27 +8,31 @@ const StoreContextProvider = ({ children }) => {
   const [serviceList, setServiceList] = useState([]);
   const [token, setToken] = useState("");
 
-  // Use environment variable for backend URL
-  const url =
-    process.env.REACT_APP_BACKEND_URL ||
-    "http://localhost:4000"; // fallback to localhost
+  // Base URL from environment variable or fallback to localhost
+  const BASE_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000";
+
+  // Create an axios instance with base URL
+  const api = axios.create({
+    baseURL: BASE_URL,
+    headers: { "Content-Type": "application/json" },
+  });
 
   // Fetch all services
   const fetchServiceList = async () => {
     try {
-      const response = await axios.get(`${url}/api/service/list`);
+      const response = await api.get("/api/service/list");
       setServiceList(response.data.data || []);
     } catch (error) {
       console.error("Failed to fetch service list:", error);
     }
   };
 
-  // Load cart data from backend
+  // Load cart data for logged-in user
   const loadCartData = async (userToken) => {
     if (!userToken) return;
     try {
-      const response = await axios.post(
-        `${url}/api/cart/get`,
+      const response = await api.post(
+        "/api/cart/get",
         {},
         { headers: { token: userToken } }
       );
@@ -44,11 +48,7 @@ const StoreContextProvider = ({ children }) => {
 
     if (!token) return;
     try {
-      await axios.post(
-        `${url}/api/cart/add`,
-        { itemId },
-        { headers: { token } }
-      );
+      await api.post("/api/cart/add", { itemId }, { headers: { token } });
     } catch (error) {
       console.error("Failed to add item to cart:", error);
     }
@@ -65,11 +65,7 @@ const StoreContextProvider = ({ children }) => {
 
     if (!token) return;
     try {
-      await axios.post(
-        `${url}/api/cart/remove`,
-        { itemId },
-        { headers: { token } }
-      );
+      await api.post("/api/cart/remove", { itemId }, { headers: { token } });
     } catch (error) {
       console.error("Failed to remove item from cart:", error);
     }
@@ -80,7 +76,7 @@ const StoreContextProvider = ({ children }) => {
     setCartItems({});
     if (!token) return;
     try {
-      await axios.post(`${url}/api/cart/clear`, {}, { headers: { token } });
+      await api.post("/api/cart/clear", {}, { headers: { token } });
     } catch (error) {
       console.error("Failed to clear cart:", error);
     }
@@ -119,7 +115,7 @@ const StoreContextProvider = ({ children }) => {
     clearCart,
     token,
     setToken,
-    url,
+    BASE_URL,
   };
 
   return <StoreContext.Provider value={contextValue}>{children}</StoreContext.Provider>;
