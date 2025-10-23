@@ -1,105 +1,128 @@
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 
-// import { service_list } from "../assets/assets";
-
 export const StoreContext = createContext(null);
 
-const StoreContextProvider = (props) => {
-  const [cartItems, setCartItems] = useState({}); //manage cart
-  const url = "http://localhost:4000";
+const StoreContextProvider = ({ children }) => {
+  const [cartItems, setCartItems] = useState({});
+  const [serviceList, setServiceList] = useState([]);
   const [token, setToken] = useState("");
-  const [service_list, setServiceList] = useState([]);
 
-  const clearCart = async () => {
-    setCartItems({}); // Clear the cart on the frontend
-    if (token) {
-      await axios.post(`${url}/api/cart/clear`, {}, { headers: { token } }); // Clear the cart on the backend
-    }
-  };
+  // Use environment variable for backend URL
+  const url =
+    process.env.REACT_APP_BACKEND_URL ||
+    "http://localhost:4000"; // fallback to localhost
 
-  const addToCart = async (itemId) => {
-    //if user is adding the service first time entry will be created
-    if (!cartItems[itemId]) {
-      setCartItems((prev) => ({ ...prev, [itemId]: 1 }));
-    } else {
-      setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
-    }
-    if (token) {
-      await axios.post(
-        url + "/api/cart/add",
-        { itemId },
-        { headers: { token } }
-      );
-    }
-  };
-
-  const removeFromCart = async (itemId) => {
-    //if user is removing the service first time entry will be deleted
-    setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] - 1 }));
-    if (token) {
-      await axios.post(
-        url + "/api/cart/remove",
-        { itemId },
-        { headers: { token } }
-      );
-    }
-  };
-
-  const getTotalCartAmount = () => {
-    //cart amount total function
-    let totalAmont = 0;
-    for (const item in cartItems) {
-      if (cartItems[item] > 0) {
-        let itemInfo = service_list.find((product) => product._id === item);
-        totalAmont += itemInfo.price * cartItems[item];
-      }
-    }
-    return totalAmont;
-  };
-
+  // Fetch all services
   const fetchServiceList = async () => {
-    const response = await axios.get(url + "/api/service/list");
-    setServiceList(response.data.data);
-  };
-
-  const loadCartData = async (token) => {
-    const response = await axios.post(
-      url + "/api/cart/get",
-      {},
-      { headers: { token } }
-    );
-    setCartItems(response.data.cartData);
-  };
-
-  useEffect(() => {
-    async function loadData() {
-      await fetchServiceList();
-      if (localStorage.getItem("token")) {
-        setToken(localStorage.getItem("token"));
-        await loadCartData(localStorage.getItem("token"));
-      }
+    try {
+      const response = await axios.get(`${url}/api/service/list`);
+      setServiceList(response.data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch service list:", error);
     }
-    loadData();
+  };
+
+  // Load cart data from backend
+  const loadCartData = async (userToken) => {
+    if (!userToken) return;
+    try {
+      const response = await axios.post(
+        `${url}/api/cart/get`,
+        {},
+        { headers: { token: userToken } }
+      );
+      setCartItems(response.data.cartData || {});
+    } catch (error) {
+      console.error("Failed to load cart data:", error);
+    }
+  };
+
+  // Add item to cart
+  const addToCart = async (itemId) => {
+    setCartItems((prev) => ({ ...prev, [itemId]: (prev[itemId] || 0) + 1 }));
+
+    if (!token) return;
+    try {
+      await axios.post(
+        `${url}/api/cart/add`,
+        { itemId },
+        { headers: { token } }
+      );
+    } catch (error) {
+      console.error("Failed to add item to cart:", error);
+    }
+  };
+
+  // Remove item from cart
+  const removeFromCart = async (itemId) => {
+    setCartItems((prev) => {
+      const newQty = (prev[itemId] || 0) - 1;
+      return newQty > 0
+        ? { ...prev, [itemId]: newQty }
+        : Object.fromEntries(Object.entries(prev).filter(([key]) => key !== itemId));
+    });
+
+    if (!token) return;
+    try {
+      await axios.post(
+        `${url}/api/cart/remove`,
+        { itemId },
+        { headers: { token } }
+      );
+    } catch (error) {
+      console.error("Failed to remove item from cart:", error);
+    }
+  };
+
+  // Clear entire cart
+  const clearCart = async () => {
+    setCartItems({});
+    if (!token) return;
+    try {
+      await axios.post(`${url}/api/cart/clear`, {}, { headers: { token } });
+    } catch (error) {
+      console.error("Failed to clear cart:", error);
+    }
+  };
+
+  // Calculate total cart amount
+  const getTotalCartAmount = () => {
+    return Object.entries(cartItems).reduce((total, [itemId, qty]) => {
+      const item = serviceList.find((s) => s._id === itemId);
+      return item ? total + item.price * qty : total;
+    }, 0);
+  };
+
+  // Initial data load
+  useEffect(() => {
+    const initialize = async () => {
+      await fetchServiceList();
+
+      const savedToken = localStorage.getItem("token");
+      if (savedToken) {
+        setToken(savedToken);
+        await loadCartData(savedToken);
+      }
+    };
+
+    initialize();
   }, []);
 
   const contextValue = {
-    service_list,
+    serviceList,
     cartItems,
     setCartItems,
     addToCart,
     removeFromCart,
     getTotalCartAmount,
-    url,
+    clearCart,
     token,
     setToken,
-    clearCart,
+    url,
   };
-  return (
-    <StoreContext.Provider value={contextValue}>
-      {props.children}
-    </StoreContext.Provider>
-  );
+
+  return <StoreContext.Provider value={contextValue}>{children}</StoreContext.Provider>;
 };
 
 export default StoreContextProvider;
