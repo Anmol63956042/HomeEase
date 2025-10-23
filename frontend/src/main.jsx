@@ -6,13 +6,15 @@ import StoreContextProvider from "./Components/context/storeContext.jsx";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import 'bootstrap/dist/css/bootstrap.min.css';
-// import { AuthProvider } from "@descope/react-sdk";
+// import { AuthProvider } from "@descope/react-sdk"; // Uncomment if using Descope
 
-// Create a simple reducer for now
+// -----------------------------
+// Redux: simple store setup
+// -----------------------------
 const initialState = {
   orders: [],
   loading: false,
-  error: null
+  error: null,
 };
 
 function rootReducer(state = initialState, action) {
@@ -22,14 +24,17 @@ function rootReducer(state = initialState, action) {
   }
 }
 
-// Configure the Redux store
 const store = configureStore({
-  reducer: rootReducer
+  reducer: rootReducer,
 });
 
+// -----------------------------
+// Render React App
+// -----------------------------
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <BrowserRouter>
+      {/* Uncomment AuthProvider if using Descope */}
       {/* <AuthProvider projectId="P2uAdkoJmtbNNqL0EN7we3djMjV6"> */}
       <StoreContextProvider>
         <App />
@@ -38,3 +43,8 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </Provider>
 );
+
+// -----------------------------
+// Debug: Verify backend URL
+// -----------------------------
+console.log("🔗 Backend URL:", __API_BASE_URL__);
