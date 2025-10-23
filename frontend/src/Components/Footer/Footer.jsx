@@ -4,10 +4,11 @@ import { assets } from "../../assets/frontend_assets/assets";
 
 const Footer = () => {
   return (
-    <div className="footer" id="footer">
+    <footer className="footer" id="footer">
       <div className="footer-content">
-        <div className="footer-content-left">
-          <img className="logo" src={assets.logo} alt="Homease Logo" />
+        {/* Left Section: Logo & Description */}
+        <div className="footer-left">
+          <img className="footer-logo" src={assets.logo} alt="Homease Logo" />
           <p>
             Homease connects you with trusted professionals for all your home service needs.
             Our vetted experts deliver quality services with convenience and reliability,
@@ -25,10 +26,12 @@ const Footer = () => {
             </a>
           </div>
         </div>
-        <div className="footer-content-center">
-          <h2>Quick Links</h2>
+
+        {/* Center Section: Quick Links */}
+        <div className="footer-center">
+          <h3>Quick Links</h3>
           <div className="footer-divider"></div>
-          <ul>
+          <ul className="footer-links">
             <li><a href="/">Home</a></li>
             <li><a href="#explore-services">Our Services</a></li>
             <li><a href="#about">About Us</a></li>
@@ -36,32 +39,36 @@ const Footer = () => {
             <li><a href="#terms">Terms of Service</a></li>
           </ul>
         </div>
-        <div className="footer-content-right">
-          <h2>Contact Us</h2>
+
+        {/* Right Section: Contact */}
+        <div className="footer-right">
+          <h3>Contact Us</h3>
           <div className="footer-divider"></div>
-          <ul>
-            <li className="contact-item">
-              <i className="contact-icon phone-icon"></i>
-              +91-6395604255
+          <ul className="footer-contact">
+            <li>
+              <span className="contact-icon phone-icon" aria-hidden="true"></span>
+              <a href="tel:+916395604255">+91-6395604255</a>
             </li>
-            <li className="contact-item">
-              <i className="contact-icon email-icon"></i>
-              yanmol1813@gmail.com
+            <li>
+              <span className="contact-icon email-icon" aria-hidden="true"></span>
+              <a href="mailto:yanmol1813@gmail.com">yanmol1813@gmail.com</a>
             </li>
-            <li className="contact-item">
-              <i className="contact-icon location-icon"></i>
+            <li>
+              <span className="contact-icon location-icon" aria-hidden="true"></span>
               Department of Computer Science, AMU, Aligarh, India
             </li>
           </ul>
         </div>
       </div>
+
+      {/* Footer Bottom */}
       <div className="footer-bottom">
         <hr />
-        <p className="footer-copyright">
+        <p>
           &copy; {new Date().getFullYear()} Homease - Your Home Service Partner | All Rights Reserved
         </p>
       </div>
-    </div>
+    </footer>
   );
 };
 
