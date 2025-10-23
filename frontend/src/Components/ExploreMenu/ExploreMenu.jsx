@@ -3,50 +3,62 @@ import "./ExploreMenu.css";
 import { menu_list } from "../../assets/frontend_assets/assets";
 
 const ExploreMenu = ({ category, setCategory }) => {
+  const handleCategoryClick = (menuName) => {
+    setCategory((prev) => (prev === menuName ? "All" : menuName));
+  };
+
   return (
-    <div className="explore-services" id="explore-services">
+    <section className="explore-services" id="explore-services">
+      {/* Header */}
       <div className="explore-services-header">
         <h1>Expert Services for Your Home</h1>
         <div className="section-divider"></div>
       </div>
+
+      {/* Description */}
       <p className="explore-services-text">
         Discover our comprehensive range of professional home services tailored to exceed your expectations.
         Each service is delivered by vetted professionals who bring expertise, reliability, and 
         exceptional craftsmanship to every project.
       </p>
+
+      {/* Menu List */}
       <div className="explore-services-list-container">
         <div className="explore-services-list">
           {menu_list.map((item, index) => {
+            const isActive = category === item.menu_name;
+
             return (
               <div
-                onClick={() =>
-                  setCategory((prev) =>
-                    prev === item.menu_name ? "All" : item.menu_name
-                  )
-                }
                 key={index}
-                className={`explore-services-list-item ${category === item.menu_name ? "active-item" : ""}`}
+                onClick={() => handleCategoryClick(item.menu_name)}
+                className={`explore-services-list-item ${isActive ? "active-item" : ""}`}
               >
                 <div className="service-icon-container">
                   <img
-                    className={category === item.menu_name ? "active" : ""}
                     src={item.menu_image}
                     alt={item.menu_name}
+                    className={isActive ? "active" : ""}
                   />
                 </div>
                 <p>{item.menu_name}</p>
-                {category === item.menu_name && <span className="service-selected-indicator"></span>}
+                {isActive && <span className="service-selected-indicator"></span>}
               </div>
             );
           })}
         </div>
       </div>
-      {/* <div className="explore-services-cta">
+
+      {/* Optional CTA (uncomment if needed) */}
+      {/*
+      <div className="explore-services-cta">
         <p>Can't find what you need? We offer custom solutions too!</p>
         <button className="contact-btn">Contact Us</button>
-      </div> */}
+      </div>
+      */}
+
       <hr />
-    </div>
+    </section>
   );
 };
 
