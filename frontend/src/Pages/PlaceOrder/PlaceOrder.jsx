@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import "./PlaceOrder.css";
 import { StoreContext } from "../../Components/context/storeContext";
 import axios from "axios";
@@ -6,47 +6,63 @@ import { useNavigate } from "react-router-dom";
 
 const PlaceOrder = () => {
   const { cartItems, getTotalCartAmount, clearCart, token } = useContext(StoreContext);
+  const navigate = useNavigate();
+
   const [userDetails, setUserDetails] = useState({
     firstName: "",
     lastName: "",
-    email: localStorage.getItem('userEmail') || "",
+    email: localStorage.getItem("userEmail") || "",
     street: "",
     city: "",
+    district: "",
     state: "",
     pincode: "",
     phone: "",
-    serviceDate: "", // Added service date field
+    serviceDate: "",
   });
 
-  const navigate = useNavigate();
+  const totalAmount = getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 200;
 
-  const totalAmount =
-    getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 200;
-
-  // Handle input changes
+  // Handle all input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // For service date, prevent past dates
+    if (name === "serviceDate") {
+      const selectedDate = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        alert("You cannot select a date from the past.");
+        return;
+      }
+    }
+
     setUserDetails((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handlePayment = async (e) => {
     e.preventDefault();
 
-    const services = Object.keys(cartItems).map((key, value) => ({
+    if (Object.keys(cartItems).length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+
+    const services = Object.keys(cartItems).map((key) => ({
       name: key,
       quantity: cartItems[key],
     }));
 
     try {
-      const { data } = await axios.post(
-        "http://localhost:4000/api/orders/create-order",
-        {
-          amount: totalAmount,
-        }
-      );
+      // Create Razorpay order
+      const { data } = await axios.post("http://localhost:4000/api/orders/create-order", {
+        amount: totalAmount,
+      });
 
       const options = {
         key: "rzp_test_ckOaggIIemTmet",
@@ -56,62 +72,42 @@ const PlaceOrder = () => {
         description: "Service Payment",
         order_id: data.id,
         handler: async function (response) {
-          alert(
-            "Payment Successful! Payment ID: " + response.razorpay_payment_id
-          );
+          alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
 
-          // Store the order in DB after payment success
+          // Verify payment and store order
           const verifyResponse = await axios.post(
             "http://localhost:4000/api/orders/verify-payment",
             {
               orderId: data.id,
               paymentId: response.razorpay_payment_id,
-              userDetails: userDetails,
-              services: services,
+              userDetails,
+              services,
               amount: totalAmount,
             }
           );
 
-          // Store the user's email in localStorage for order tracking
-          localStorage.setItem('userEmail', userDetails.email);
+          // Store user's email in localStorage for order tracking
+          localStorage.setItem("userEmail", userDetails.email);
 
-          // Display OTP for admin (for testing purposes)
           console.log("OTP for admin:", verifyResponse.data.otp);
-
           alert("An OTP has been sent to your email for verification.");
 
           clearCart();
-          navigate("/", {
-            state: { message: "Your service has been booked successfully!" },
-          });
+          navigate("/", { state: { message: "Your service has been booked successfully!" } });
         },
         prefill: {
-          name: userDetails.firstName + " " + userDetails.lastName,
+          name: `${userDetails.firstName} ${userDetails.lastName}`,
           email: userDetails.email,
           contact: userDetails.phone,
         },
         theme: { color: "#FF5733" },
       };
 
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
       console.error("Error in payment:", error);
-    }
-  };
-
-  const handleDateChange = (e) => {
-    const selectedDate = new Date(e.target.value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set time to midnight for comparison
-
-    if (selectedDate < today) {
-      alert(
-        "You cannot select a date from the past. Please choose a valid date."
-      );
-      e.target.value = ""; // Clear the invalid date
-    } else {
-      handleInputChange(e);
+      alert("Payment failed. Please try again.");
     }
   };
 
@@ -120,94 +116,98 @@ const PlaceOrder = () => {
       <div className="place-order-left">
         <p className="title">Delivery Information</p>
         <div className="multi-field">
-          <input 
-            type="text" 
+          <input
+            type="text"
             name="firstName"
+            placeholder="First Name"
             value={userDetails.firstName}
             onChange={handleInputChange}
-            placeholder="First Name" 
-            required 
+            required
           />
-          <input 
-            type="text" 
+          <input
+            type="text"
             name="lastName"
+            placeholder="Last Name"
             value={userDetails.lastName}
             onChange={handleInputChange}
-            placeholder="Last Name" 
-            required 
+            required
           />
         </div>
-        <input 
-          type="email" 
+
+        <input
+          type="email"
           name="email"
+          placeholder="Email Address"
           value={userDetails.email}
           onChange={handleInputChange}
-          placeholder="Email address" 
-          required 
+          required
         />
-        <input 
-          type="text" 
+        <input
+          type="text"
           name="street"
+          placeholder="Street"
           value={userDetails.street}
           onChange={handleInputChange}
-          placeholder="Street" 
-          required 
-        />
-        <div className="multi-field">
-          <input 
-            type="text" 
-            name="city"
-            value={userDetails.city}
-            onChange={handleInputChange}
-            placeholder="City" 
-            required 
-          />
-          <input 
-            type="text" 
-            name="district"
-            value={userDetails.district}
-            onChange={handleInputChange}
-            placeholder="District" 
-            required 
-          />
-        </div>
-        <div className="multi-field">
-          <input 
-            type="text" 
-            name="state"
-            value={userDetails.state}
-            onChange={handleInputChange}
-            placeholder="State" 
-            required 
-          />
-          <input 
-            type="text" 
-            name="pincode"
-            value={userDetails.pincode}
-            onChange={handleInputChange}
-            placeholder="Pincode" 
-            required 
-          />
-        </div>
-        <input 
-          type="text" 
-          name="phone"
-          value={userDetails.phone}
-          onChange={handleInputChange}
-          placeholder="Phone" 
-          required 
+          required
         />
 
-        {/* New Date Field */}
+        <div className="multi-field">
+          <input
+            type="text"
+            name="city"
+            placeholder="City"
+            value={userDetails.city}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            type="text"
+            name="district"
+            placeholder="District"
+            value={userDetails.district}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div className="multi-field">
+          <input
+            type="text"
+            name="state"
+            placeholder="State"
+            value={userDetails.state}
+            onChange={handleInputChange}
+            required
+          />
+          <input
+            type="text"
+            name="pincode"
+            placeholder="Pincode"
+            value={userDetails.pincode}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <input
+          type="text"
+          name="phone"
+          placeholder="Phone"
+          value={userDetails.phone}
+          onChange={handleInputChange}
+          required
+        />
+
         <label>Select Service Date:</label>
-        <input 
-          type="date" 
+        <input
+          type="date"
           name="serviceDate"
           value={userDetails.serviceDate}
-          onChange={handleDateChange}
-          required 
+          onChange={handleInputChange}
+          required
         />
       </div>
+
       <div className="place-order-right">
         <div className="cart-total">
           <h2>Cart Total</h2>
@@ -225,7 +225,9 @@ const PlaceOrder = () => {
             <b>Total</b>
             <b> Rs. {totalAmount}</b>
           </div>
-          <button type="submit">PROCEED TO PAYMENT</button>
+          <button type="submit" disabled={getTotalCartAmount() === 0}>
+            PROCEED TO PAYMENT
+          </button>
         </div>
       </div>
     </form>
