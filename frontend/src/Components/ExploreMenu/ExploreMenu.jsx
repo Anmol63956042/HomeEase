@@ -3,6 +3,7 @@ import "./ExploreMenu.css";
 import { menu_list } from "../../assets/frontend_assets/assets";
 
 const ExploreMenu = ({ category, setCategory }) => {
+  // Toggle category selection
   const handleCategoryClick = (menuName) => {
     setCategory((prev) => (prev === menuName ? "All" : menuName));
   };
@@ -27,12 +28,12 @@ const ExploreMenu = ({ category, setCategory }) => {
         <div className="explore-services-list">
           {menu_list.map((item, index) => {
             const isActive = category === item.menu_name;
-
             return (
-              <div
+              <button
                 key={index}
                 onClick={() => handleCategoryClick(item.menu_name)}
                 className={`explore-services-list-item ${isActive ? "active-item" : ""}`}
+                aria-pressed={isActive}
               >
                 <div className="service-icon-container">
                   <img
@@ -42,14 +43,14 @@ const ExploreMenu = ({ category, setCategory }) => {
                   />
                 </div>
                 <p>{item.menu_name}</p>
-                {isActive && <span className="service-selected-indicator"></span>}
-              </div>
+                {isActive && <span className="service-selected-indicator" />}
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Optional CTA (uncomment if needed) */}
+      {/* Optional CTA */}
       {/*
       <div className="explore-services-cta">
         <p>Can't find what you need? We offer custom solutions too!</p>
